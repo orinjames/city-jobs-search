@@ -3,7 +3,9 @@
 City Job Search App
 
 to add:
-- number of positions column
+- number of positions?
+- reformat dates
+- reformat agency names (normal case, )
 
 '''
 
@@ -13,42 +15,17 @@ from tkinter import ttk
 
 
 import pandas as pd                     # dataframe functionality
-from datetime import datetime
+from datetime import datetime           # date and time functionality
+import webbrowser                       # allows opening links
 
-# allows opening links
-import webbrowser
+# _________________ DATA _________________
 
-
-'''
-Get Job Postings (API)
-'''
 def get_data():
     # Request data from API using maximum limit of 50,000 to override default limit of 1,000
     jobs_url = "https://data.cityofnewyork.us/resource/kpav-sd4t.csv?$limit=50000" # ABOUT: https://data.cityofnewyork.us/City-Government/Jobs-NYC-Postings/kpav-sd4t/about_data
-
-
     jobs_df = pd.read_csv(jobs_url)
-
-    # Output date
-    now = datetime.now()
-    now_output_format = now.strftime("%B %d, %Y at %I:%M %p")
-    print(f'NYC Open Data API accessed on {now_output_format}')
-
-    # Output total jobs
-    print(f'Total jobs returned by NYC Open Data: {len(jobs_df)}')
-
-    # print(jobs_df.columns)
-    # print(jobs_df["agency"].unique())
-    # print(jobs_df[jobs_df['agency'] == 'DEPARTMENT OF TRANSPORTATION'].head(5))
     return jobs_df
 
-
-'''  
-Prepare data
-- set posting_date to datetime format for sorting
-- add url column to link to job posting
-- sort all data by date, ascending (newest to oldest)
-'''
 def prepare_data(df):
     # Convert dates to datetime format
     df["posting_date"] = pd.to_datetime(df["posting_date"])
@@ -65,8 +42,7 @@ def prepare_data(df):
     df = df.sort_values(by='posting_date', ascending=False)
     return df
 
-
-# _________________ TIME FUNCTIONS _________________
+# _________________ TIME FILTER _________________
 def get_last_24_hours(df):
     last_24h = df[df['posting_date'] >= pd.Timestamp.now() - pd.Timedelta('24h')]
     return last_24h
@@ -79,7 +55,7 @@ def get_last_30_days(df):
     last_month = df[df['posting_date'] >= pd.Timestamp.now() - pd.Timedelta('30d')]
     return last_month
 
-# _________________ AGENCY FILTER FUNCTIONS _________________
+# _________________ AGENCY FILTER _________________
 
 def populate_agency_list(df):
     agencies = sorted(df["agency"].dropna().unique())
@@ -98,17 +74,8 @@ def clear_filters():
     # Update results with original dataframe
     update_results(jobs_df)
 
-# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# _________________ RESULTS VIEW _________________
 
-def open_url(event):
-    item_id = results_tree.focus()
-    if item_id:
-        url = results_tree.item(item_id, "tags")[0]  # get URL from tags
-        webbrowser.open_new_tab(url)
-
-# _________________ APPLY FILTER & SHOW RESULTS _________________
-
-# Applies any filters
 def apply_filters(event=None):
     # Apply posting date filters
     if radio_selection.get() == "24h":
@@ -152,70 +119,83 @@ def update_results(df):
             ),
             tags=(row["url"])
         )
-
     
     # Show number of results in frame label
     results_frame.config(text=f" Results: {len(df)} jobs ")
 
+# Adds option to open job posting online
+def open_url(event):
+    item_id = results_tree.focus()
+    if item_id:
+        url = results_tree.item(item_id, "tags")[0]  # get URL from tags
+        webbrowser.open_new_tab(url)
 
+#========================================================
 
-# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# ============== MAIN ============== #
 
+# Create dataframe of job postings
 jobs_df = prepare_data(get_data())
 
-
 # __________ GUI Setup __________ #
+'''
+Grid format
+'''
 root = tk.Tk()
 root.title("City Jobs Search")
 root.geometry("900x600")    # window width & height in pixels
 
+# Configure column weights so column 1 (right side) expands
+root.columnconfigure(0, weight=0)  # Left column (radio buttons) - fixed
+root.columnconfigure(1, weight=1)  # Right column (main content) - flexible 
 
-# __________ Intro information __________ #
-
-# Output date and time
+# ============== Intro information ============== #
 now = datetime.now()
 now_output_format = now.strftime("%B %d, %Y at %I:%M %p")
 
 # Tool overview/introduction
 intro_text = (
-    f"Find recently posted jobs and filter by attributes. NYC Open Data API accessed on {now_output_format}."
+    f"Jobs sorted by date (new to old). Close and restart to refresh data. NYC Open Data API accessed on {now_output_format}."
 )
-
 intro = tk.Label(root, text=intro_text, font=("Helvetica", 10), wraplength=700, justify="left")
 intro.grid(row=0, column=0, columnspan=2, sticky="w", pady=5, padx=10)
 
-# __________ FILTERS INTERFACE __________ #
+# ============== FILTERS INTERFACE ============== #
 
-# Setup interface frame
+# Setup frame for filter interface features
 filter_frame = ttk.LabelFrame(root, text=" Filters ")
 filter_frame.grid(row=1, column=0, padx=5, pady=5, sticky="nsew")
 
+# __________ TIMEFRAME SELECT __________ #
 
-# __________ TIMEFRAME SELECT INTERFACE __________ #
-
-# Holds radio button selection
+# Variable for radio button selection
 radio_selection = tk.StringVar(value="none")  # Default to "none" to have invisible radio selected (visual glitch otherwise)
 
-
+# Radio buttons
 radio_24h = tk.Radiobutton(filter_frame, text="Posted in last 24 hours", variable=radio_selection, value="24h", command=apply_filters, font=("Helvetica", 10))
 radio_24h.grid(row=0, column=0, sticky="nw")
+
 radio_7d = tk.Radiobutton(filter_frame, text="Posted in last 7 days", variable=radio_selection, value="7d", command=apply_filters, font=("Helvetica", 10))
 radio_7d.grid(row=1, column=0, sticky="nw")
+
 radio_1m = tk.Radiobutton(filter_frame, text="Posted in last 30 days", variable=radio_selection, value="30d", command=apply_filters, font=("Helvetica", 10))
 radio_1m.grid(row=2, column=0, sticky="nw")
 
 # Invisible radio button required to create initial view with no selections
 dummy_radio_button = tk.Radiobutton(filter_frame, variable=radio_selection, value="none")
 dummy_radio_button.pack_forget()    # Makes button invisible
-# __________ AGENCY SELECT INTERFACE __________ #
 
-# Create list of agency names in results
+# __________ AGENCY SELECT __________ #
+
+# Setup listbox to hold agency names
 agency_listbox = tk.Listbox(
     filter_frame,
     selectmode="multiple",
     height=10
 )
 agency_listbox.grid(row=3, column=0, sticky="nsew")
+
+# Listener to filter results whenever listbox item selected
 agency_listbox.bind("<<ListboxSelect>>", apply_filters)
 
 # Allow listbox to expand
@@ -231,11 +211,10 @@ scrollbar.grid(row=3, column=1, sticky="ns")
 # Connect scrollbar to listbox
 agency_listbox.config(yscrollcommand=scrollbar.set)
 
-# __________ Agencies with job postings __________ #
-# Add agency name results to list
+# Add agency names to list
 populate_agency_list(jobs_df)
 
-# __________ Button setup __________ #
+# BUTTONS
 # Interface button setup
 btn_frame = ttk.Frame(filter_frame)
 btn_frame.grid(row=4, column=0, pady=5, sticky="w")
@@ -245,9 +224,7 @@ ttk.Button(btn_frame, text="Clear Filters", command=clear_filters).grid(
     row=0, column=1
 )
 
-# _____________________________________________ #
-# __________ RESULTS DISPLAY __________ #
-# _____________________________________________ #
+# ============== RESULTS DISPLAY ============== #
 
 # Create right-side frame for results
 results_frame = ttk.LabelFrame(root, text=f" Results ")
@@ -292,17 +269,12 @@ results_tree.configure(yscrollcommand=scrollbar.set)
 # Link opening listener
 results_tree.bind("<Double-1>", open_url)
 
-
 # Make results frame expandable
 results_frame.columnconfigure(0, weight=1)
 results_frame.rowconfigure(0, weight=1)
 
-
-# __________ Start with all results __________ #
+# ============== INITIAL RESULTS ============== #
 update_results(jobs_df)
 
-
-# ____________________________________________________
-
-# Runs GUI window
-root.mainloop()
+# ============== ROOT INTERFACE ============== #
+root.mainloop() # Runs interface window
