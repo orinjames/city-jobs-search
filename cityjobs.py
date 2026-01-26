@@ -161,9 +161,7 @@ def update_results(df):
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-# LEAVE COMMENTED TO AVOID API USE
-# jobs_df = prepare_data(get_data())
-jobs_df = prepare_data(pd.read_csv(r'C:\Users\orinj\Documents\Python\City Job Search\test_output_01_23_26.csv'))
+jobs_df = prepare_data(get_data())
 
 
 # __________ GUI Setup __________ #
