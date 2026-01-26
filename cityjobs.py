@@ -9,11 +9,8 @@ to add:
 
 '''
 
-# required for user interface
-import tkinter as tk
-from tkinter import ttk
-
-
+import tkinter as tk                    # user interface module
+from tkinter import ttk                 # user interface
 import pandas as pd                     # dataframe functionality
 from datetime import datetime           # date and time functionality
 import webbrowser                       # allows opening links
@@ -30,13 +27,13 @@ def prepare_data(df):
     # Convert dates to datetime format
     df["posting_date"] = pd.to_datetime(df["posting_date"])
 
-    # df["formatted_date"] = 
+    df["formatted_date"] = df["posting_date"].dt.strftime('%a %d %b %Y')
 
     # Add URL column
     df["url"] = ("https://cityjobs.nyc.gov/jobs?q=" + df["job_id"].astype(str) + "&options=&page=1")
 
     # Add column as text to show for URL link
-    df["link_text"] = "Open Link"
+    df["link_text"] = "Click Here"
 
     # Sort by date ascending
     df = df.sort_values(by='posting_date', ascending=False)
@@ -114,7 +111,7 @@ def update_results(df):
             values=(
                 row["business_title"],
                 row["agency"],
-                row["posting_date"],
+                row["formatted_date"],
                 row["link_text"],
             ),
             tags=(row["url"])
@@ -124,10 +121,24 @@ def update_results(df):
     results_frame.config(text=f" Results: {len(df)} jobs ")
 
 # Adds option to open job posting online
+# def open_url(event):
+#     item_id = results_tree.focus()
+#     if item_id:
+#         url = results_tree.item(item_id, "tags")[0]  # get URL from tags
+#         webbrowser.open_new_tab(url)
+
 def open_url(event):
-    item_id = results_tree.focus()
-    if item_id:
-        url = results_tree.item(item_id, "tags")[0]  # get URL from tags
+    region = results_tree.identify("region", event.x, event.y)
+    if region != "cell":
+        return
+
+    column = results_tree.identify_column(event.x)
+    item = results_tree.identify_row(event.y)
+
+    # URL column is column #4
+    if column == "#4" and item:
+        tags = results_tree.item(item, "tags")
+        url = tags[0]  # first tag is the URL
         webbrowser.open_new_tab(url)
 
 #========================================================
@@ -145,11 +156,15 @@ root = tk.Tk()
 root.title("City Jobs Search")
 root.geometry("900x600")    # window width & height in pixels
 
+# Configure row weights so row 1 (bottom) expands
+root.rowconfigure(1, weight=1)
+
 # Configure column weights so column 1 (right side) expands
 root.columnconfigure(0, weight=0)  # Left column (radio buttons) - fixed
 root.columnconfigure(1, weight=1)  # Right column (main content) - flexible 
 
 # ============== Intro information ============== #
+
 now = datetime.now()
 now_output_format = now.strftime("%B %d, %Y at %I:%M %p")
 
@@ -157,14 +172,14 @@ now_output_format = now.strftime("%B %d, %Y at %I:%M %p")
 intro_text = (
     f"Jobs sorted by date (new to old). Close and restart to refresh data. NYC Open Data API accessed on {now_output_format}."
 )
-intro = tk.Label(root, text=intro_text, font=("Helvetica", 10), wraplength=700, justify="left")
-intro.grid(row=0, column=0, columnspan=2, sticky="w", pady=5, padx=10)
+intro = tk.Label(root, text=intro_text, font=("Helvetica", 10), justify="left")
+intro.grid(row=0, column=0, columnspan=2, sticky="w", pady=10, padx=10)
 
 # ============== FILTERS INTERFACE ============== #
 
 # Setup frame for filter interface features
 filter_frame = ttk.LabelFrame(root, text=" Filters ")
-filter_frame.grid(row=1, column=0, padx=5, pady=5, sticky="nsew")
+filter_frame.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
 
 # __________ TIMEFRAME SELECT __________ #
 
@@ -217,26 +232,23 @@ populate_agency_list(jobs_df)
 # BUTTONS
 # Interface button setup
 btn_frame = ttk.Frame(filter_frame)
-btn_frame.grid(row=4, column=0, pady=5, sticky="w")
+btn_frame.grid(row=4, column=0, pady=10, columnspan=2)
 
 # Clear all filters
 ttk.Button(btn_frame, text="Clear Filters", command=clear_filters).grid(
-    row=0, column=1
+    row=0,
+    column=0,
 )
 
 # ============== RESULTS DISPLAY ============== #
 
 # Create right-side frame for results
 results_frame = ttk.LabelFrame(root, text=f" Results ")
-results_frame.grid(row=1, column=1, padx=5, pady=5, sticky="nsew")
-
-# Make root expandable
-root.columnconfigure(1, weight=1)
-root.rowconfigure(1, weight=1)
+results_frame.grid(row=1, column=1, padx=10, pady=10, sticky="nsew")
 
 # __________ Treeview setup __________ #
 # Treeview columns
-columns = ("business_title", "agency", "posting_date", "url")
+columns = ("business_title", "agency", "formatted_date", "link_text")
 
 results_tree = ttk.Treeview(
     results_frame,
@@ -248,14 +260,14 @@ results_tree.grid(row=0, column=0, sticky="nsew")
 # Set column headers
 results_tree.heading("business_title", text="Job Title")
 results_tree.heading("agency", text="Agency")
-results_tree.heading("posting_date", text="Posted Date")
-results_tree.heading("url", text="URL")
+results_tree.heading("formatted_date", text="Posted Date")
+results_tree.heading("link_text", text="Link")
 
 # Format columns
-results_tree.column("business_title", width=100, anchor="w")
-results_tree.column("agency", width=100, anchor="w")
-results_tree.column("posting_date", width=100, anchor="w")
-results_tree.column("url", width=100, anchor="w")
+results_tree.column("business_title", width=150, anchor="w")
+results_tree.column("agency", width=150, anchor="w")
+results_tree.column("formatted_date", width=30, anchor="w")
+results_tree.column("link_text", width=30, anchor="center")
 
 # Add scrollbar
 scrollbar = ttk.Scrollbar(
@@ -267,7 +279,9 @@ scrollbar.grid(row=0, column=1, sticky="ns")
 results_tree.configure(yscrollcommand=scrollbar.set)
 
 # Link opening listener
-results_tree.bind("<Double-1>", open_url)
+# results_tree.bind("<Double-1>", open_url)
+results_tree.bind("<Button-1>", open_url)
+
 
 # Make results frame expandable
 results_frame.columnconfigure(0, weight=1)
