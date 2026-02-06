@@ -1,4 +1,3 @@
-
 '''
 City Job Search App
 '''
@@ -67,7 +66,7 @@ class CityJobsApp():
         now = datetime.now()
         now_output_format = now.strftime("%B %d, %Y at %I:%M %p")
         intro_text = (
-            f"Jobs sorted by date (new to old). Data updated weekly; see cityjobs.nyc.gov for jobs posted between updates.\nNYC Open Data API accessed on {now_output_format}."
+            f"Jobs sorted by posting date (new to old). Data updated weekly; see cityjobs.nyc.gov for jobs posted between updates.\nNYC Open Data API accessed on {now_output_format}."
         )
         intro = tk.Label(self.root, text=intro_text, font=("Helvetica", 10), justify="left")
         intro.grid(row=0, column=0, columnspan=2, sticky="w", pady=10, padx=10)
