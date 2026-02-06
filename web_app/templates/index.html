@@ -1,0 +1,59 @@
+<body>
+    <h1>City Jobs Search</h1>
+    <div class="intro">
+        {{ intro_text }}
+    </div>
+
+    <!-- Filter inputs -->
+    <form method="post">
+        <fieldset>
+            <legend>Filters</legend>
+
+            <label>
+            <input type="radio" name="time_filter" value="24h" checked>
+            Posted in last 24 hours
+            </label>
+
+            <label>
+            <input type="radio" name="time_filter" value="7d">
+            Posted in last 7 days
+            </label>
+
+            <label>
+            <input type="radio" name="time_filter" value="30d">
+            Posted in last 30 days
+            </label>
+        </fieldset>
+        <button type="submit">Apply</button>
+    </form>
+
+    <!-- RESULTS -->
+    <fieldset>
+        <legend>Results</legend>
+        <table class="results-table">
+        <thead>
+            <tr>
+            <!-- Create a header for each column (columns passed in by Flask) -->
+            {% for col, label in columns.items() %}
+                <th>{{ label }}</th>
+            {% endfor %}
+            </tr>
+        </thead>
+
+        <!-- Populate data into table -->
+        <tbody>
+            <!-- jobs_data passed in by Flask -->
+            {% for _, row in jobs_data.iterrows() %}
+            <tr>
+                {% for col, label in columns.items() %}
+                <td>
+                    {{ row[col] }}
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+        </table>
+    </fieldset>
+
+</body>
