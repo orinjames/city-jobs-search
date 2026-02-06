@@ -1,3 +1,4 @@
+<!-- HTML template for City Jobs Search webapp -->
 
 <!DOCTYPE html>
 <html lang="en">
@@ -17,7 +18,7 @@
             </div>
         </header>
 
-        <!-- Filter inputs -->
+        <!-- Filters -->
         <div class="filters">
             <form method="post">
             <fieldset>
@@ -53,9 +54,10 @@
                     {% endfor %}
                 </div>
 
-                
+                <div class="button-group">
                 <!-- APPLY FILTERS -->
                 <button type="submit">Apply</button>
+                </div>
             </fieldset>
             </form>
         </div>
@@ -64,6 +66,7 @@
         <div class="results">
         <fieldset>
             <legend>Results: {{ job_count }} jobs</legend>
+            <div class="results-table-group">
             <table class="results-table">
             <thead>
                 <tr>
@@ -88,6 +91,7 @@
                 {% endfor %}
             </tbody>
             </table>
+            </div>
         </fieldset>
         </div>
     </div>
