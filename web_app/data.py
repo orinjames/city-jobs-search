@@ -3,7 +3,8 @@ import pandas as pd
 
 def get_data():
     # Request data from API using maximum limit of 50,000 to override default limit of 1,000
-    jobs_url = "https://data.cityofnewyork.us/resource/kpav-sd4t.csv?$limit=50000" # ABOUT: https://data.cityofnewyork.us/City-Government/Jobs-NYC-Postings/kpav-sd4t/about_data
+    # ABOUT: https://data.cityofnewyork.us/City-Government/Jobs-NYC-Postings/kpav-sd4t/about_data
+    jobs_url = "https://data.cityofnewyork.us/resource/kpav-sd4t.csv?$limit=50000"
     # Read data into dataframe
     jobs_df = pd.read_csv(jobs_url)
     return jobs_df

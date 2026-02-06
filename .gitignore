@@ -1,7 +1,7 @@
 
 
-# Ignore virtual environment
+# Ignore virtual environment folder in web_app/ (see requirements.txt for environment requirements)
 .venv/
 
-# Ignore compiled code
+# Ignore compiled code folder in web_app/
 __pycache__/

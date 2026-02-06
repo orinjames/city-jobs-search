@@ -1,59 +1,94 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>City Jobs Search</title>
+
+  <!-- Link CSS file using Flask syntax -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
 <body>
-    <h1>City Jobs Search</h1>
-    <div class="intro">
-        {{ intro_text }}
-    </div>
+    <div class="page">
+        <header class="header">
+            <h1>City Jobs Search</h1>
+            <div class="intro">
+                {{ intro_text }}
+            </div>
+        </header>
 
-    <!-- Filter inputs -->
-    <form method="post">
+        <!-- Filter inputs -->
+        <div class="filters">
+            <form method="post">
+            <fieldset>
+                <legend>Filters</legend>
+
+                <!-- TIME FILTER -->
+                 <div class="time-filter-group">
+                <label>
+                <input type="radio" name="time_filter" value="24h" checked>
+                Posted in last 24 hours
+                </label>
+
+                <label>
+                <input type="radio" name="time_filter" value="7d">
+                Posted in last 7 days
+                </label>
+
+                <label>
+                <input type="radio" name="time_filter" value="30d">
+                Posted in last 30 days
+                </label>
+                </div>
+
+                <br><br>
+                
+                <!-- AGENCY FILTER -->
+                <div class="agency-filter-group">
+                    {% for agency in agencies %}
+                        <label>
+                            <input type="checkbox" name="agencies" value="{{ agency }}">
+                            {{ agency }}
+                        </label><br>
+                    {% endfor %}
+                </div>
+
+                
+                <!-- APPLY FILTERS -->
+                <button type="submit">Apply</button>
+            </fieldset>
+            </form>
+        </div>
+
+        <!-- RESULTS -->
+        <div class="results">
         <fieldset>
-            <legend>Filters</legend>
-
-            <label>
-            <input type="radio" name="time_filter" value="24h" checked>
-            Posted in last 24 hours
-            </label>
-
-            <label>
-            <input type="radio" name="time_filter" value="7d">
-            Posted in last 7 days
-            </label>
-
-            <label>
-            <input type="radio" name="time_filter" value="30d">
-            Posted in last 30 days
-            </label>
-        </fieldset>
-        <button type="submit">Apply</button>
-    </form>
-
-    <!-- RESULTS -->
-    <fieldset>
-        <legend>Results</legend>
-        <table class="results-table">
-        <thead>
-            <tr>
-            <!-- Create a header for each column (columns passed in by Flask) -->
-            {% for col, label in columns.items() %}
-                <th>{{ label }}</th>
-            {% endfor %}
-            </tr>
-        </thead>
-
-        <!-- Populate data into table -->
-        <tbody>
-            <!-- jobs_data passed in by Flask -->
-            {% for _, row in jobs_data.iterrows() %}
-            <tr>
+            <legend>Results: {{ job_count }} jobs</legend>
+            <table class="results-table">
+            <thead>
+                <tr>
+                <!-- Create a header for each column (columns passed in by Flask) -->
                 {% for col, label in columns.items() %}
-                <td>
-                    {{ row[col] }}
-                </td>
+                    <th>{{ label }}</th>
                 {% endfor %}
-            </tr>
-            {% endfor %}
-        </tbody>
-        </table>
-    </fieldset>
+                </tr>
+            </thead>
 
+            <!-- Populate data into table -->
+            <tbody>
+                <!-- jobs_data passed in by Flask -->
+                {% for _, row in jobs_data.iterrows() %}
+                <tr>
+                    {% for col, label in columns.items() %}
+                    <td>
+                        {{ row[col] }}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+            </table>
+        </fieldset>
+        </div>
+    </div>
 </body>
