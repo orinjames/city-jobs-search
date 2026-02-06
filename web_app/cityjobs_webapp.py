@@ -4,17 +4,14 @@ from flask import request               # read incoming form data
 
 from datetime import datetime
 
-# my modules
+# import my data modules
 from data import get_data, prepare_data
-
 
 now = datetime.now()
 now_output_format = now.strftime("%B %d, %Y at %I:%M %p")
 INTRO_TEXT = (
-    f"Jobs sorted by date (new to old). Data updated weekly; see cityjobs.nyc.gov for jobs posted between updates.\nNYC Open Data API accessed on {now_output_format}."
+    f"Jobs sorted by posting date (new to old). Data updated weekly; see cityjobs.nyc.gov for jobs posted between updates.\nNYC Open Data API accessed on {now_output_format}."
 )
-
-
 
 
 # Start app
