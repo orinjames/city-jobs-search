@@ -27,7 +27,7 @@
                 <!-- TIME FILTER -->
                  <div class="time-filter-group">
                 <label>
-                <input type="radio" name="time_filter" value="24h" checked>
+                <input type="radio" name="time_filter" value="24h">
                 Posted in last 24 hours
                 </label>
 
@@ -53,10 +53,10 @@
                         </label><br>
                     {% endfor %}
                 </div>
-
+                
+                <!-- BUTTONS -->
                 <div class="button-group">
-                <!-- APPLY FILTERS -->
-                <button type="submit">Apply</button>
+                <button type="reset">Clear Filters</button>
                 </div>
             </fieldset>
             </form>
@@ -95,4 +95,120 @@
         </fieldset>
         </div>
     </div>
+
+    <script>
+    // Convert Python dataframe to JavaScript array
+    const jobsData = {{ jobs_data.to_json(orient='records') | safe }};
+    const allAgencies = {{ agencies | tojson }};
+
+    console.log("Jobs loaded:", jobsData.length);
+
+    // ===== FILTER FUNCTIONS =====
+
+    function filterByTime(jobs, timeFilter) {
+        if (!timeFilter) return jobs;
+        
+        const now = new Date();
+        let cutoffDate;
+        
+        if (timeFilter === '24h') {
+            cutoffDate = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+        } else if (timeFilter === '7d') {
+            cutoffDate = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+        } else if (timeFilter === '30d') {
+            cutoffDate = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+        } else {
+            return jobs;
+        }
+        
+        return jobs.filter(job => {
+            const postingDate = new Date(job.posting_date);
+            return postingDate >= cutoffDate;
+        });
+    }
+
+    function filterByAgencies(jobs, selectedAgencies) {
+        if (!selectedAgencies || selectedAgencies.length === 0) {
+            return jobs;
+        }
+        
+        return jobs.filter(job => selectedAgencies.includes(job.agency));
+    }
+
+    function applyAllFilters() {
+        // Get current filter values
+        const timeFilterInput = document.querySelector('input[name="time_filter"]:checked');
+        const timeFilter = timeFilterInput ? timeFilterInput.value : null;  // null if none selected
+        
+        const agencyCheckboxes = document.querySelectorAll('input[name="agencies"]:checked');
+        const selectedAgencies = Array.from(agencyCheckboxes).map(cb => cb.value);
+        
+        console.log('Filtering with:', timeFilter, selectedAgencies);
+        
+        // Apply filters
+        let filteredJobs = filterByTime(jobsData, timeFilter);  // Will return all jobs if timeFilter is null
+        filteredJobs = filterByAgencies(filteredJobs, selectedAgencies);
+        
+        // Update the table
+        updateTable(filteredJobs);
+        updateJobCount(filteredJobs.length);
+    }
+
+    // Wait for page to load
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // Apply initial filter (24h by default)
+        applyAllFilters();
+        
+        // Add event listeners to all filter inputs
+        const radioButtons = document.querySelectorAll('input[name="time_filter"]');
+        radioButtons.forEach(radio => {
+            radio.addEventListener('change', applyAllFilters);
+        });
+        
+        const checkboxes = document.querySelectorAll('input[name="agencies"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', applyAllFilters);
+        });
+        
+        // Handle Clear Filters button
+        const clearButton = document.querySelector('button[type="reset"]');
+        clearButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Uncheck all radio buttons
+            const radioButtons = document.querySelectorAll('input[name="time_filter"]');
+            radioButtons.forEach(rb => rb.checked = false);
+            
+            // Uncheck all checkboxes
+            checkboxes.forEach(cb => cb.checked = false);
+            
+            // Reapply filters
+            applyAllFilters();
+        });
+    });
+
+    // Function to update the table with new data
+    function updateTable(jobs) {
+        const tbody = document.querySelector('.results-table tbody');
+        tbody.innerHTML = '';
+        
+        jobs.forEach(job => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${job.business_title}</td>
+                <td>${job.agency}</td>
+                <td>${job.formatted_date}</td>
+                <td><a href="${job.url}" target="_blank">${job.link_text}</a></td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    // Function to update job count
+    function updateJobCount(count) {
+        const legend = document.querySelector('.results fieldset legend');
+        legend.textContent = `Results: ${count} jobs`;
+    }
+    </script>
 </body>
